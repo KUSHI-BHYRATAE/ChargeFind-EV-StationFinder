@@ -53,8 +53,8 @@ function StationMap({ stations, queryPoint, selectedStation, onSelect }: {
   return <MapContainer center={indiaCenter} zoom={5} scrollWheelZoom className="h-full min-h-[310px] w-full">
     <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
     <MapFocus point={queryPoint} stations={stations} selectedStation={selectedStation} />
-    {queryPoint && <Marker position={queryPoint} icon={queryIcon}><Popup><div className="font-semibold">Your search point</div><div className="mono mt-1 text-[11px]">{queryPoint[0].toFixed(5)}, {queryPoint[1].toFixed(5)}</div></Popup></Marker>}
-    {stations.map((station, index) => <Marker key={station.stationId} position={[station.latitude, station.longitude]} icon={stationIcon} eventHandlers={{ click: () => onSelect(station.stationId) }}>
+    {queryPoint && <Marker position={queryPoint} title="Search point" icon={queryIcon}><Popup><div className="font-semibold">Your search point</div><div className="mono mt-1 text-[11px]">{queryPoint[0].toFixed(5)}, {queryPoint[1].toFixed(5)}</div></Popup></Marker>}
+    {stations.map((station, index) => <Marker key={station.stationId} position={[station.latitude, station.longitude]} title={station.name} icon={stationIcon} eventHandlers={{ click: () => onSelect(station.stationId) }}>
       <Popup><div className="max-w-[220px]"><div className="text-[10px] uppercase tracking-[.16em] text-teal-300">Nearby station · #{index + 1}</div><div className="mt-1 font-semibold">{station.name}</div><div className="mt-1 text-xs text-slate-300">{station.city}{station.stateProvince ? `, ${station.stateProvince}` : ''}</div><div className="mono mt-2 text-[10px] text-slate-400">{station.latitude.toFixed(5)}, {station.longitude.toFixed(5)}</div><div className="mono mt-1 text-xs text-teal-200">{station.distanceKm.toFixed(2)} km away</div></div></Popup>
     </Marker>)}
   </MapContainer>;
@@ -90,11 +90,11 @@ function Home() {
     const lat = Number(latValue);
     const lon = Number(lonValue);
     if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
-      setValidationError('Latitude must be a number between -90 and 90.');
+      setValidationError('Please enter a valid latitude between -90 and 90.');
       return;
     }
     if (!Number.isFinite(lon) || lon < -180 || lon > 180) {
-      setValidationError('Longitude must be a number between -180 and 180.');
+      setValidationError('Please enter a valid longitude between -180 and 180.');
       return;
     }
     const point: [number, number] = [lat, lon];
@@ -120,6 +120,11 @@ function Home() {
 
   const results = nearest.data?.stations ?? [];
   const nearestError = nearest.isError;
+  const searchPointLabel = selectedCity
+    ? `${selectedCity.name}${selectedCity.stateProvince ? `, ${selectedCity.stateProvince}` : ''}`
+    : searchPoint
+      ? `${searchPoint[0].toFixed(4)}, ${searchPoint[1].toFixed(4)}`
+      : '';
   return <main className="min-h-[100dvh] overflow-x-hidden bg-[#0c1421]">
     <header className="border-b border-white/[.07] bg-[#0c1421]/95">
       <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-5 sm:px-8">
@@ -139,10 +144,7 @@ function Home() {
         <div className="max-w-2xl">
           <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[.22em] text-teal-300"><span className="h-px w-6 bg-teal-400/70" /> Find your next charge</div>
           <h1 className="text-[34px] font-semibold leading-[1.08] tracking-[-.055em] text-[#eff5f4] sm:text-[44px]">Find Your Nearest<br className="hidden sm:block" /> <span className="text-slate-400">EV Charger.</span></h1>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-400">Discover nearby electric vehicle charging stations using spatial search, geographic distance, and intelligent nearest-neighbor algorithms. Search by coordinates, browser location, or a city in the included India dataset.</p>
-          <div className="mt-4 flex flex-wrap gap-2" aria-label="Search technologies">
-            {['2D KD-TREE', 'HAVERSINE', 'NEAREST NEIGHBOR', 'TOP-K SEARCH'].map((technology) => <span key={technology} className="mono rounded-md border border-teal-300/10 bg-teal-300/[.035] px-2 py-1 text-[9px] tracking-wide text-teal-100/75">{technology}</span>)}
-          </div>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-400">Find real EV charging stations around you. Search by city, coordinates, or your current location, then compare ranked results on the map using the included India dataset.</p>
         </div>
         <div className="flex items-center gap-3 self-start rounded-xl border border-white/[.07] bg-white/[.025] px-4 py-3 md:self-auto">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-300/[.1] text-teal-300"><Database size={17} /></div>
@@ -176,7 +178,7 @@ function Home() {
           </div>
 
           <div className="mb-3 flex items-center gap-3"><span className="h-px flex-1 bg-white/[.07]" /><span className="text-[10px] uppercase tracking-[.15em] text-slate-600">or exact location</span><span className="h-px flex-1 bg-white/[.07]" /></div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="text-[11px] font-semibold uppercase tracking-[.13em] text-slate-400">Latitude
             <input data-testid="input-latitude" type="number" step="any" min="-90" max="90" placeholder="12.9716" value={latitude} onChange={(event) => { setLatitude(event.target.value); setSelectedCity(null); setValidationError(''); }} className="mono mt-2 h-11 w-full rounded-lg border border-slate-700/70 bg-[#0d1827] px-3 text-sm font-normal text-slate-100 outline-none transition focus:border-teal-300/50" />
             </label>
@@ -196,7 +198,7 @@ function Home() {
           <button onClick={useLocation} data-testid="button-geolocation" className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-teal-300/20 bg-teal-300/[.055] py-2.5 text-xs font-semibold text-teal-200 transition hover:bg-teal-300/[.1]"><Crosshair size={14} /> Use my current location</button>
           {geoError && <p data-testid="text-geolocation-error" className="mt-2 text-xs leading-5 text-rose-300">{geoError}</p>}
           <button onClick={() => runSearch()} disabled={nearest.isFetching} data-testid="button-find-stations" className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#35c7b8] text-sm font-bold text-[#08201f] shadow-[0_5px_22px_rgba(29,193,179,.14)] transition hover:bg-[#58d8ca] disabled:cursor-not-allowed disabled:opacity-40">
-            {nearest.isFetching ? <><LoaderCircle size={16} className="animate-spin" /> Searching nearby stations</> : <><Navigation size={15} /> Find Nearest Stations</>}
+            {nearest.isFetching ? <><LoaderCircle size={16} className="animate-spin" /> Finding nearest charging stations...</> : <><Navigation size={15} /> Find Nearest Stations</>}
           </button>
           {selectedCity && <p className="mt-2 text-center text-[10px] text-slate-500">Search point reflects representative city coordinates, not an exact address.</p>}
         </div>
@@ -215,11 +217,16 @@ function Home() {
 
           <section className="surface rounded-2xl p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
-              <div><h2 className="text-sm font-semibold text-slate-100">Nearest Charging Stations</h2><p className="mt-1 text-[11px] text-slate-500">{queryParams ? nearest.data ? `${nearest.data.resultCount} stations found · ranked from your search point` : `Searching for up to ${queryParams.k} stations` : 'Results appear here after a search'}</p></div>
+              <div><h2 className="text-sm font-semibold text-slate-100">Nearest Charging Stations</h2><p className="mt-1 text-[11px] text-slate-500">{queryParams ? nearest.data ? `Ranked by Haversine distance · K = ${queryParams.k}` : `Searching for up to ${queryParams.k} stations` : 'Results appear here after a search'}</p></div>
               {nearest.data && <div className="mono flex items-center gap-1.5 rounded-md border border-white/[.07] bg-white/[.025] px-2 py-1.5 text-[10px] text-slate-300"><Clock3 size={12} className="text-teal-300" />{nearest.data.searchTimeMs.toFixed(2)} ms</div>}
             </div>
+            {!nearest.isFetching && !nearestError && nearest.data && queryParams && <p data-testid="search-summary" className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-teal-300/[.12] bg-teal-300/[.035] px-3 py-3 text-[11px] leading-5 text-slate-300 sm:px-4">
+              <span className="font-semibold text-slate-100">{nearest.data.resultCount} station{nearest.data.resultCount === 1 ? '' : 's'} found</span><span aria-hidden="true" className="text-teal-300/50">·</span>
+              <span>Closest: {results[0] ? `${results[0].distanceKm.toFixed(2)} km (${results[0].name})` : 'none returned'}</span><span aria-hidden="true" className="text-teal-300/50">·</span>
+              <span>Search point: {searchPointLabel || 'coordinates unavailable'}</span>
+            </p>}
             {nearest.isFetching && <div className="space-y-2" aria-label="Loading stations"><div className="h-[68px] animate-pulse rounded-lg bg-white/[.04]" /><div className="h-[68px] animate-pulse rounded-lg bg-white/[.03]" /><div className="h-[68px] animate-pulse rounded-lg bg-white/[.025]" /></div>}
-            {!nearest.isFetching && nearestError && <div className="rounded-xl border border-rose-400/15 bg-rose-400/[.04] px-4 py-5"><div className="text-sm font-semibold text-rose-200">Couldn’t load nearby stations</div><p className="mt-1 text-xs leading-5 text-slate-400">The search service did not return results. Check your connection and retry.</p><button onClick={() => nearest.refetch()} data-testid="button-retry-search" className="mt-3 rounded-md border border-rose-300/20 px-3 py-1.5 text-xs font-semibold text-rose-200 hover:bg-rose-300/[.08]">Retry search</button></div>}
+            {!nearest.isFetching && nearestError && <div className="rounded-xl border border-rose-400/15 bg-rose-400/[.04] px-4 py-5"><div className="text-sm font-semibold text-rose-200">Couldn’t load nearby stations</div><p className="mt-1 text-xs leading-5 text-slate-400">Unable to reach the station service. Please try again.</p><button onClick={() => nearest.refetch()} data-testid="button-retry-search" className="mt-3 rounded-md border border-rose-300/20 px-3 py-1.5 text-xs font-semibold text-rose-200 hover:bg-rose-300/[.08]">Retry search</button></div>}
             {!nearest.isFetching && !nearestError && queryParams && nearest.data && results.length === 0 && <div className="rounded-xl border border-white/[.07] bg-white/[.02] px-4 py-8 text-center"><div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-700/40 text-slate-400"><MapPin size={17} /></div><div className="text-sm font-semibold text-slate-200">No stations found nearby</div><p className="mt-1 text-xs text-slate-500">Try another point or city from the indexed dataset.</p></div>}
             {!nearest.isFetching && !queryParams && <div className="flex items-center gap-3 rounded-xl border border-white/[.07] bg-white/[.02] p-4"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-700/30 text-slate-500"><Search size={15} /></div><div><div className="text-xs font-medium text-slate-300">Ready when you are</div><p className="mt-1 text-[11px] text-slate-500">Enter coordinates or choose an indexed city to see ranked results.</p></div></div>}
             {!nearest.isFetching && results.length > 0 && <div className="space-y-2">
@@ -236,7 +243,7 @@ function Home() {
                     {station.fastDc !== null && <span className="rounded border border-white/[.08] px-1.5 py-0.5 text-[9px] text-slate-300">{station.fastDc ? 'DC fast' : 'Not DC fast'}</span>}
                   </span>
                 </span>
-                <span className="shrink-0 pt-0.5 text-right"><span className="mono block text-[13px] font-bold text-teal-200">{station.distanceKm.toFixed(2)}<span className="ml-1 text-[10px] font-normal text-slate-400">km</span></span><span className="mt-1 block text-[9px] uppercase tracking-wider text-slate-600">away</span></span>
+                <span className="shrink-0 pt-0.5 text-right"><span className="mono block text-[13px] font-bold text-teal-200">{station.distanceKm.toFixed(2)}<span className="ml-1 text-[10px] font-normal text-slate-400">km</span></span><span className="mt-1 block text-[9px] uppercase tracking-wider text-slate-600">away</span><span className="mt-2 inline-flex items-center gap-1 text-[9px] text-teal-300/75 transition group-hover:text-teal-200"><MapPin size={10} />View on map</span></span>
               </button>)}
             </div>}
             {nearest.data && <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/[.06] pt-3 text-[10px] text-slate-500">
@@ -248,16 +255,13 @@ function Home() {
         </div>
       </section>
 
-      <section className="mt-7 grid gap-4 md:grid-cols-[1.1fr_2fr]">
-        <div className="surface rounded-2xl p-5">
-          <div className="mb-3 flex items-center gap-2 text-teal-300"><CircleHelp size={16} /><span className="text-[11px] font-semibold uppercase tracking-[.16em]">How ChargeFind works</span></div>
-          <p className="text-[13px] leading-6 text-slate-300">ChargeFind ranks stations from the supplied India dataset using geographic distance—not a broad city-level guess.</p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-xl border border-white/[.065] bg-white/[.02] p-4"><div className="mono mb-2 text-[10px] text-teal-300">01 · BUILD INDEX</div><p className="text-xs leading-5 text-slate-400">The charging stations are organized in a 2D KD-tree.</p></div>
-          <div className="rounded-xl border border-white/[.065] bg-white/[.02] p-4"><div className="mono mb-2 text-[10px] text-teal-300">02 · SEARCH NEARBY</div><p className="text-xs leading-5 text-slate-400">The KD-tree explores relevant regions and prunes branches that cannot contain closer stations.</p></div>
-          <div className="rounded-xl border border-white/[.065] bg-white/[.02] p-4"><div className="mono mb-2 text-[10px] text-teal-300">03 · MEASURE</div><p className="text-xs leading-5 text-slate-400">Haversine distance accounts for the Earth’s curvature.</p></div>
-          <div className="rounded-xl border border-white/[.065] bg-white/[.02] p-4"><div className="mono mb-2 text-[10px] text-teal-300">04 · RETURN TOP-K</div><p className="text-xs leading-5 text-slate-400">The closest K stations are ranked and displayed on the map.</p></div>
+      <section className="surface mt-7 rounded-2xl px-4 py-4 sm:px-5 sm:py-5">
+        <div className="mb-4 flex items-center gap-2 text-teal-300"><CircleHelp size={15} /><span className="text-[10px] font-semibold uppercase tracking-[.16em]">How it works</span><span className="ml-1 text-[10px] font-normal normal-case tracking-normal text-slate-500">A geographic top-K search</span></div>
+        <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="flex gap-3"><span className="mono mt-0.5 text-[10px] text-teal-300">01</span><p className="text-[11px] leading-5 text-slate-400"><span className="mr-1 font-semibold uppercase tracking-wide text-slate-200">Build</span>Stations are indexed in a 2D KD-tree.</p></div>
+          <div className="flex gap-3"><span className="mono mt-0.5 text-[10px] text-teal-300">02</span><p className="text-[11px] leading-5 text-slate-400"><span className="mr-1 font-semibold uppercase tracking-wide text-slate-200">Search</span>The tree prunes regions that cannot contain closer stations.</p></div>
+          <div className="flex gap-3"><span className="mono mt-0.5 text-[10px] text-teal-300">03</span><p className="text-[11px] leading-5 text-slate-400"><span className="mr-1 font-semibold uppercase tracking-wide text-slate-200">Measure</span>Haversine calculates geographic distance.</p></div>
+          <div className="flex gap-3"><span className="mono mt-0.5 text-[10px] text-teal-300">04</span><p className="text-[11px] leading-5 text-slate-400"><span className="mr-1 font-semibold uppercase tracking-wide text-slate-200">Rank</span>The nearest K stations are returned and mapped.</p></div>
         </div>
       </section>
       <footer className="mt-8 flex flex-col gap-2 border-t border-white/[.06] pt-4 text-[10px] text-slate-600 sm:flex-row sm:items-center sm:justify-between">
