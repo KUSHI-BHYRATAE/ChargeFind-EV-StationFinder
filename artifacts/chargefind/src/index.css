@@ -1,0 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+@theme inline {
+  --color-background: hsl(var(--background)); --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border)); --color-input: hsl(var(--input)); --color-ring: hsl(var(--ring));
+  --color-card: hsl(var(--card)); --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover)); --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary)); --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary)); --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted)); --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent)); --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive)); --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --font-sans: var(--app-font-sans); --font-mono: var(--app-font-mono); --radius-lg: var(--radius);
+}
+:root, .dark {
+  color-scheme: dark;
+  --background: 218 42% 8%; --foreground: 200 24% 92%;
+  --border: 216 27% 19%; --input: 216 27% 22%; --ring: 174 78% 46%;
+  --card: 218 35% 11%; --card-foreground: 200 24% 92%;
+  --popover: 218 35% 11%; --popover-foreground: 200 24% 92%;
+  --primary: 173 78% 46%; --primary-foreground: 218 42% 8%;
+  --secondary: 216 29% 16%; --secondary-foreground: 200 24% 92%;
+  --muted: 216 29% 16%; --muted-foreground: 210 12% 59%;
+  --accent: 188 53% 17%; --accent-foreground: 173 78% 66%;
+  --destructive: 0 63% 48%; --destructive-foreground: 200 24% 96%;
+  --app-font-sans: 'DM Sans', sans-serif; --app-font-mono: 'Space Mono', monospace;
+  --radius: 14px; --sidebar: 218 42% 8%; --sidebar-foreground: 200 24% 92%; --sidebar-border: 216 27% 19%;
+  --chart-1: 173 78% 46%; --chart-2: 195 75% 52%; --chart-3: 43 80% 60%; --chart-4: 210 40% 65%; --chart-5: 330 60% 62%;
+}
+* { box-sizing: border-box; }
+html { background: #0c1421; }
+body { margin: 0; background: #0c1421; color: #e5edf0; font-family: var(--app-font-sans); -webkit-font-smoothing: antialiased; }
+button, input { font: inherit; }
+button { cursor: pointer; }
+.mono { font-family: var(--app-font-mono); }
+.surface { background: linear-gradient(145deg, rgba(19,31,47,.98), rgba(14,24,38,.98)); border: 1px solid rgba(119,153,173,.15); }
+.fade-up { animation: fadeUp .45s ease both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.leaflet-container { width: 100%; height: 100%; background: #172536; font-family: 'DM Sans', sans-serif; }
+.leaflet-tile { filter: brightness(.77) invert(1) hue-rotate(180deg) saturate(.55) contrast(.9); }
+.leaflet-control-attribution { font-size: 9px !important; background: rgba(9,17,28,.8) !important; color: #9bacb7 !important; }
+.leaflet-control-attribution a { color: #5fcac4 !important; }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #142235; color: #e5edf0; border: 1px solid #304155; box-shadow: 0 10px 30px #07101dbb; }
+.leaflet-popup-content { margin: 12px 15px; }
+.station-pin { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #c2fffb; background: #08a99e; box-shadow: 0 0 0 5px rgba(8,169,158,.18), 0 0 16px rgba(8,220,198,.48); }
+.query-pin { width: 20px; height: 20px; border-radius: 50%; background: #f7c85d; border: 4px solid #fff4ce; box-shadow: 0 0 0 7px rgba(247,200,93,.2); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }

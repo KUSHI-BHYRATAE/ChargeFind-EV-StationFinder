@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "ChargeFind EV Finder"
+description = "A responsive EV charging station finder that searches real Indian station data with the included Python KD-tree and Haversine distance implementation, then displays ranked results on an interactive map."
+version = "1.0.0"
+id = "artifacts/chargefind"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18665
+
+[services.development]
+run = "pnpm --filter @workspace/chargefind run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/chargefind", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/chargefind/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18665"
+BASE_PATH = "/"

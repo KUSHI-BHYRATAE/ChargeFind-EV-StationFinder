@@ -1,0 +1,284 @@
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ErrorBoundary } from '@/components/error-boundary';
+import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import NotFound from '@/pages/not-found';
+import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
+import { useGetCities, useGetNearestStations, useGetStationOverview, getGetCitiesQueryKey, getGetNearestStationsQueryKey } from '@workspace/api-client-react';
+import type { CitySuggestion, StationResult } from '@workspace/api-client-react';
+import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { Activity, ArrowDown, ArrowUpRight, Check, ChevronDown, CircleHelp, Clock3, Crosshair, Database, LoaderCircle, MapPin, Navigation, Search, Zap } from 'lucide-react';
+
+const queryClient = new QueryClient();
+
+const stationIcon = L.divIcon({ className: '', html: '<div class="station-pin"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
+const queryIcon = L.divIcon({ className: '', html: '<div class="query-pin"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
+const indiaCenter: [number, number] = [22.5, 79];
+
+function MapFocus({ point, stations, selectedStation }: {
+  point: [number, number] | null;
+  stations: StationResult[];
+  selectedStation: string | null;
+}) {
+  const map = useMap();
+  useEffect(() => {
+    const selected = stations.find((station) => station.stationId === selectedStation);
+    if (selected) {
+      map.flyTo([selected.latitude, selected.longitude], 13, { duration: 0.8 });
+      return;
+    }
+    if (!point) return;
+    if (stations.length === 0) {
+      map.flyTo(point, 12, { duration: 0.8 });
+      return;
+    }
+    const bounds = L.latLngBounds([
+      point,
+      ...stations.map((station) => [station.latitude, station.longitude] as [number, number]),
+    ]);
+    map.fitBounds(bounds, { padding: [36, 36], maxZoom: 13, animate: true, duration: 0.8 });
+  }, [map, point, selectedStation, stations]);
+  return null;
+}
+
+function StationMap({ stations, queryPoint, selectedStation, onSelect }: {
+  stations: StationResult[];
+  queryPoint: [number, number] | null;
+  selectedStation: string | null;
+  onSelect: (id: string) => void;
+}) {
+  return <MapContainer center={indiaCenter} zoom={5} scrollWheelZoom className="h-full min-h-[310px] w-full">
+    <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+    <MapFocus point={queryPoint} stations={stations} selectedStation={selectedStation} />
+    {queryPoint && <Marker position={queryPoint} icon={queryIcon}><Popup><div className="font-semibold">Your search point</div><div className="mono mt-1 text-[11px]">{queryPoint[0].toFixed(5)}, {queryPoint[1].toFixed(5)}</div></Popup></Marker>}
+    {stations.map((station, index) => <Marker key={station.stationId} position={[station.latitude, station.longitude]} icon={stationIcon} eventHandlers={{ click: () => onSelect(station.stationId) }}>
+      <Popup><div className="max-w-[220px]"><div className="text-[10px] uppercase tracking-[.16em] text-teal-300">Nearby station · #{index + 1}</div><div className="mt-1 font-semibold">{station.name}</div><div className="mt-1 text-xs text-slate-300">{station.city}{station.stateProvince ? `, ${station.stateProvince}` : ''}</div><div className="mono mt-2 text-[10px] text-slate-400">{station.latitude.toFixed(5)}, {station.longitude.toFixed(5)}</div><div className="mono mt-1 text-xs text-teal-200">{station.distanceKm.toFixed(2)} km away</div></div></Popup>
+    </Marker>)}
+  </MapContainer>;
+}
+
+function Home() {
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+  const [k, setK] = useState(5);
+  const [queryParams, setQueryParams] = useState<{ latitude: number; longitude: number; k: number } | null>(null);
+  const [searchPoint, setSearchPoint] = useState<[number, number] | null>(null);
+  const [selectedStation, setSelectedStation] = useState<string | null>(null);
+  const [cityQuery, setCityQuery] = useState('');
+  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
+  const [selectedCity, setSelectedCity] = useState<CitySuggestion | null>(null);
+  const [geoError, setGeoError] = useState('');
+  const [validationError, setValidationError] = useState('');
+
+  const cityParams = useMemo(() => ({ q: cityQuery.trim() }), [cityQuery]);
+  const citiesEnabled = cityDropdownOpen && cityQuery.trim().length >= 2;
+  const overview = useGetStationOverview();
+  const cities = useGetCities(cityParams, { query: { enabled: citiesEnabled, queryKey: getGetCitiesQueryKey(cityParams) } });
+  const nearest = useGetNearestStations(queryParams ?? { latitude: 0, longitude: 0, k }, {
+    query: { enabled: queryParams !== null, queryKey: getGetNearestStationsQueryKey(queryParams ?? { latitude: 0, longitude: 0, k }), retry: false },
+  });
+
+  function runSearch(latValue = latitude, lonValue = longitude) {
+    setValidationError('');
+    if (latValue.trim() === '' || lonValue.trim() === '') {
+      setValidationError('Enter both coordinates or choose a city from the station dataset.');
+      return;
+    }
+    const lat = Number(latValue);
+    const lon = Number(lonValue);
+    if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+      setValidationError('Latitude must be a number between -90 and 90.');
+      return;
+    }
+    if (!Number.isFinite(lon) || lon < -180 || lon > 180) {
+      setValidationError('Longitude must be a number between -180 and 180.');
+      return;
+    }
+    const point: [number, number] = [lat, lon];
+    setLatitude(String(lat)); setLongitude(String(lon)); setSearchPoint(point); setSelectedStation(null);
+    setQueryParams({ latitude: lat, longitude: lon, k });
+  }
+
+  function chooseCity(city: CitySuggestion) {
+    setSelectedCity(city); setCityQuery(`${city.name}${city.stateProvince ? `, ${city.stateProvince}` : ''}`);
+    setCityDropdownOpen(false);
+    setLatitude(String(city.latitude)); setLongitude(String(city.longitude));
+    runSearch(String(city.latitude), String(city.longitude));
+  }
+
+  function useLocation() {
+    setGeoError('');
+    if (!navigator.geolocation) { setGeoError('Location is not available in this browser.'); return; }
+    navigator.geolocation.getCurrentPosition((position) => {
+      setSelectedCity(null);
+      runSearch(String(position.coords.latitude), String(position.coords.longitude));
+    }, () => setGeoError('We could not access your location. Check browser permissions and try again.'), { enableHighAccuracy: true, timeout: 12000 });
+  }
+
+  const results = nearest.data?.stations ?? [];
+  const nearestError = nearest.isError;
+  return <main className="min-h-[100dvh] overflow-x-hidden bg-[#0c1421]">
+    <header className="border-b border-white/[.07] bg-[#0c1421]/95">
+      <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-5 sm:px-8">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-teal-300/20 bg-teal-300/[.09] text-teal-300"><Zap size={20} fill="currentColor" /></div>
+          <div><div className="text-[17px] font-bold tracking-[-.04em] text-slate-100">Charge<span className="text-teal-300">Find</span></div><div className="text-[10px] font-medium uppercase tracking-[.19em] text-slate-500">EV Spatial Intelligence</div></div>
+        </div>
+        <div className="flex items-center gap-2 rounded-full border border-white/[.08] bg-white/[.025] px-3 py-2" data-testid="status-dataset">
+          <span className={`h-2 w-2 rounded-full ${overview.data?.dataReady ? 'bg-teal-300 shadow-[0_0_9px_#58d5c7]' : overview.isError ? 'bg-rose-400' : 'animate-pulse bg-amber-300'}`} />
+          <span className="text-xs text-slate-300">{overview.isLoading ? 'Checking station data' : overview.isError ? 'Data status unavailable' : overview.data?.dataReady ? 'Live dataset ready' : 'Dataset not ready'}</span>
+        </div>
+      </div>
+    </header>
+
+    <div className="mx-auto max-w-[1440px] px-5 pb-12 pt-8 sm:px-8 lg:pt-11">
+      <section className="fade-up mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+        <div className="max-w-2xl">
+          <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[.22em] text-teal-300"><span className="h-px w-6 bg-teal-400/70" /> Find your next charge</div>
+          <h1 className="text-[34px] font-semibold leading-[1.08] tracking-[-.055em] text-[#eff5f4] sm:text-[44px]">Find Your Nearest<br className="hidden sm:block" /> <span className="text-slate-400">EV Charger.</span></h1>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-400">Discover nearby electric vehicle charging stations using spatial search, geographic distance, and intelligent nearest-neighbor algorithms. Search by coordinates, browser location, or a city in the included India dataset.</p>
+          <div className="mt-4 flex flex-wrap gap-2" aria-label="Search technologies">
+            {['2D KD-TREE', 'HAVERSINE', 'NEAREST NEIGHBOR', 'TOP-K SEARCH'].map((technology) => <span key={technology} className="mono rounded-md border border-teal-300/10 bg-teal-300/[.035] px-2 py-1 text-[9px] tracking-wide text-teal-100/75">{technology}</span>)}
+          </div>
+        </div>
+        <div className="flex items-center gap-3 self-start rounded-xl border border-white/[.07] bg-white/[.025] px-4 py-3 md:self-auto">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-300/[.1] text-teal-300"><Database size={17} /></div>
+          {overview.isLoading ? <div className="space-y-2"><div className="h-3 w-28 animate-pulse rounded bg-slate-700" /><div className="h-2 w-20 animate-pulse rounded bg-slate-800" /></div> :
+            overview.data ? <div><div className="mono text-sm font-bold text-slate-100" data-testid="text-stations-indexed">{overview.data.stationsIndexed.toLocaleString()} <span className="font-sans font-normal text-slate-400">stations indexed</span></div><div className="mt-1 text-[11px] text-slate-500">{overview.data.citiesIndexed.toLocaleString()} cities · {overview.data.algorithm}</div></div> :
+            <div><div className="text-sm text-slate-200">Station index status</div><button className="mt-1 text-xs text-teal-300 hover:text-teal-200" onClick={() => overview.refetch()} data-testid="button-retry-overview">Retry status</button></div>}
+        </div>
+      </section>
+
+      <section className="grid items-start gap-5 lg:grid-cols-[minmax(340px,390px)_minmax(0,1fr)]">
+        <div className="surface fade-up relative z-20 rounded-2xl p-5 sm:p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <div><h2 className="text-[16px] font-semibold tracking-[-.02em] text-slate-100">Find charging stations</h2><p className="mt-1 text-xs text-slate-500">Choose a city or enter exact coordinates.</p></div>
+            <div className="mono rounded-md border border-teal-300/15 bg-teal-300/[.06] px-2 py-1 text-[10px] text-teal-200">01 / SEARCH</div>
+          </div>
+
+          <div className="relative mb-4">
+            <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[.13em] text-slate-400" htmlFor="city-search">Dataset city</label>
+            <div className={`flex h-11 items-center gap-3 rounded-lg border bg-[#0d1827] px-3 transition-colors ${cityDropdownOpen ? 'border-teal-300/45' : 'border-slate-700/70'}`}>
+              <Search size={16} className="shrink-0 text-slate-500" />
+              <input id="city-search" data-testid="input-city-search" className="w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-600" placeholder="Search an indexed city…" value={cityQuery} onFocus={() => setCityDropdownOpen(true)} onChange={(event) => { setCityQuery(event.target.value); setSelectedCity(null); setCityDropdownOpen(true); }} onKeyDown={(event) => { if (event.key === 'Escape') setCityDropdownOpen(false); if (event.key === 'Enter' && cities.data?.[0]) chooseCity(cities.data[0]); }} />
+              <button onClick={() => setCityDropdownOpen(!cityDropdownOpen)} aria-label="Toggle city suggestions" data-testid="button-city-suggestions" className="text-slate-500 hover:text-slate-200"><ChevronDown size={16} /></button>
+            </div>
+            {cityDropdownOpen && cityQuery.trim().length >= 2 && <div className="absolute left-0 right-0 top-[72px] z-30 max-h-56 overflow-auto rounded-xl border border-slate-700 bg-[#111e2e] p-1 shadow-2xl">
+              {cities.isLoading ? <div className="px-3 py-4 text-xs text-slate-400">Looking in the station dataset…</div> : cities.isError ? <div className="px-3 py-4 text-xs text-rose-300">City suggestions are unavailable. Try coordinates.</div> : (cities.data?.length ?? 0) === 0 ? <div className="px-3 py-4 text-xs text-slate-400">No indexed city matches this search.</div> : cities.data?.map((city) => <button key={`${city.name}-${city.stateProvince ?? ''}`} onClick={() => chooseCity(city)} data-testid={`option-city-${city.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`} className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left hover:bg-white/[.05]">
+                <span><span className="block text-sm font-medium text-slate-100">{city.name}{city.stateProvince ? `, ${city.stateProvince}` : ''}</span><span className="mt-0.5 block text-[11px] text-slate-500">{city.stationCount.toLocaleString()} indexed station{city.stationCount === 1 ? '' : 's'}</span></span>
+                <ArrowUpRight size={14} className="text-slate-500" />
+              </button>)}
+            </div>}
+            {selectedCity && <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-teal-300/[.06] px-2.5 py-2 text-[11px] leading-4 text-teal-100/80"><Check size={13} className="mt-[1px] shrink-0 text-teal-300" />Using the dataset’s representative coordinates for {selectedCity.name}{selectedCity.stateProvince ? `, ${selectedCity.stateProvince}` : ''}.</div>}
+          </div>
+
+          <div className="mb-3 flex items-center gap-3"><span className="h-px flex-1 bg-white/[.07]" /><span className="text-[10px] uppercase tracking-[.15em] text-slate-600">or exact location</span><span className="h-px flex-1 bg-white/[.07]" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="text-[11px] font-semibold uppercase tracking-[.13em] text-slate-400">Latitude
+            <input data-testid="input-latitude" type="number" step="any" min="-90" max="90" placeholder="12.9716" value={latitude} onChange={(event) => { setLatitude(event.target.value); setSelectedCity(null); setValidationError(''); }} className="mono mt-2 h-11 w-full rounded-lg border border-slate-700/70 bg-[#0d1827] px-3 text-sm font-normal text-slate-100 outline-none transition focus:border-teal-300/50" />
+            </label>
+            <label className="text-[11px] font-semibold uppercase tracking-[.13em] text-slate-400">Longitude
+            <input data-testid="input-longitude" type="number" step="any" min="-180" max="180" placeholder="77.5946" value={longitude} onChange={(event) => { setLongitude(event.target.value); setSelectedCity(null); setValidationError(''); }} className="mono mt-2 h-11 w-full rounded-lg border border-slate-700/70 bg-[#0d1827] px-3 text-sm font-normal text-slate-100 outline-none transition focus:border-teal-300/50" />
+            </label>
+          </div>
+        {validationError && <p data-testid="text-coordinate-error" role="alert" className="mt-2 text-xs leading-5 text-rose-300">{validationError}</p>}
+          <div className="mt-4 flex items-center justify-between">
+            <label htmlFor="result-count" className="text-xs text-slate-400">Stations to find <span className="text-slate-600">(K)</span></label>
+            <div className="flex items-center gap-3">
+              <button aria-label="Decrease number of results" data-testid="button-k-decrease" onClick={() => setK(Math.max(1, k - 1))} disabled={k === 1} className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-700 text-slate-300 disabled:opacity-30"><ArrowDown size={12} /></button>
+              <span id="result-count" data-testid="text-result-count" className="mono min-w-5 text-center text-sm text-slate-100">{k}</span>
+              <button aria-label="Increase number of results" data-testid="button-k-increase" onClick={() => setK(Math.min(10, k + 1))} disabled={k === 10} className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-700 text-slate-300 disabled:opacity-30"><ArrowUpRight size={13} /></button>
+            </div>
+          </div>
+          <button onClick={useLocation} data-testid="button-geolocation" className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-teal-300/20 bg-teal-300/[.055] py-2.5 text-xs font-semibold text-teal-200 transition hover:bg-teal-300/[.1]"><Crosshair size={14} /> Use my current location</button>
+          {geoError && <p data-testid="text-geolocation-error" className="mt-2 text-xs leading-5 text-rose-300">{geoError}</p>}
+          <button onClick={() => runSearch()} disabled={nearest.isFetching} data-testid="button-find-stations" className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#35c7b8] text-sm font-bold text-[#08201f] shadow-[0_5px_22px_rgba(29,193,179,.14)] transition hover:bg-[#58d8ca] disabled:cursor-not-allowed disabled:opacity-40">
+            {nearest.isFetching ? <><LoaderCircle size={16} className="animate-spin" /> Searching nearby stations</> : <><Navigation size={15} /> Find Nearest Stations</>}
+          </button>
+          {selectedCity && <p className="mt-2 text-center text-[10px] text-slate-500">Search point reflects representative city coordinates, not an exact address.</p>}
+        </div>
+
+        <div className="fade-up min-w-0 space-y-4">
+          <section className="surface overflow-hidden rounded-2xl">
+            <div className="flex items-center justify-between border-b border-white/[.07] px-4 py-3 sm:px-5">
+              <div className="flex items-center gap-2"><MapPin size={15} className="text-teal-300" /><span className="text-sm font-semibold text-slate-200">Station map</span></div>
+              <div className="flex items-center gap-4 text-[10px] text-slate-500"><span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#f7c85d]" />Search point</span><span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-teal-400" />Station</span></div>
+            </div>
+            <div className="h-[310px] sm:h-[380px] lg:h-[420px]">
+              <StationMap stations={results} queryPoint={searchPoint} selectedStation={selectedStation} onSelect={setSelectedStation} />
+            </div>
+            {!queryParams && <div className="pointer-events-none -mt-[96px] relative z-[500] mx-auto w-max rounded-lg border border-slate-600/70 bg-[#0d1827]/90 px-3 py-2 text-[11px] text-slate-300 backdrop-blur-sm">Search to see actual nearby stations</div>}
+          </section>
+
+          <section className="surface rounded-2xl p-4 sm:p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div><h2 className="text-sm font-semibold text-slate-100">Nearest Charging Stations</h2><p className="mt-1 text-[11px] text-slate-500">{queryParams ? nearest.data ? `${nearest.data.resultCount} stations found · ranked from your search point` : `Searching for up to ${queryParams.k} stations` : 'Results appear here after a search'}</p></div>
+              {nearest.data && <div className="mono flex items-center gap-1.5 rounded-md border border-white/[.07] bg-white/[.025] px-2 py-1.5 text-[10px] text-slate-300"><Clock3 size={12} className="text-teal-300" />{nearest.data.searchTimeMs.toFixed(2)} ms</div>}
+            </div>
+            {nearest.isFetching && <div className="space-y-2" aria-label="Loading stations"><div className="h-[68px] animate-pulse rounded-lg bg-white/[.04]" /><div className="h-[68px] animate-pulse rounded-lg bg-white/[.03]" /><div className="h-[68px] animate-pulse rounded-lg bg-white/[.025]" /></div>}
+            {!nearest.isFetching && nearestError && <div className="rounded-xl border border-rose-400/15 bg-rose-400/[.04] px-4 py-5"><div className="text-sm font-semibold text-rose-200">Couldn’t load nearby stations</div><p className="mt-1 text-xs leading-5 text-slate-400">The search service did not return results. Check your connection and retry.</p><button onClick={() => nearest.refetch()} data-testid="button-retry-search" className="mt-3 rounded-md border border-rose-300/20 px-3 py-1.5 text-xs font-semibold text-rose-200 hover:bg-rose-300/[.08]">Retry search</button></div>}
+            {!nearest.isFetching && !nearestError && queryParams && nearest.data && results.length === 0 && <div className="rounded-xl border border-white/[.07] bg-white/[.02] px-4 py-8 text-center"><div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-700/40 text-slate-400"><MapPin size={17} /></div><div className="text-sm font-semibold text-slate-200">No stations found nearby</div><p className="mt-1 text-xs text-slate-500">Try another point or city from the indexed dataset.</p></div>}
+            {!nearest.isFetching && !queryParams && <div className="flex items-center gap-3 rounded-xl border border-white/[.07] bg-white/[.02] p-4"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-700/30 text-slate-500"><Search size={15} /></div><div><div className="text-xs font-medium text-slate-300">Ready when you are</div><p className="mt-1 text-[11px] text-slate-500">Enter coordinates or choose an indexed city to see ranked results.</p></div></div>}
+            {!nearest.isFetching && results.length > 0 && <div className="space-y-2">
+              {results.map((station, index) => <button key={station.stationId} data-testid={`result-station-${station.stationId}`} onClick={() => setSelectedStation(station.stationId)} className={`group flex w-full items-start gap-3 rounded-xl border p-3 text-left transition ${selectedStation === station.stationId ? 'border-teal-300/35 bg-teal-300/[.06]' : 'border-white/[.065] bg-white/[.018] hover:border-white/[.14] hover:bg-white/[.035]'}`}>
+                <span className={`mono mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[11px] ${index === 0 ? 'bg-teal-300/15 text-teal-200' : 'bg-white/[.05] text-slate-400'}`}>{String(index + 1).padStart(2, '0')}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[13px] font-semibold text-slate-100">{station.name}</span>
+                  <span className="mt-1 block truncate text-[11px] text-slate-500">{station.city}{station.stateProvince ? `, ${station.stateProvince}` : ''}</span>
+                  <span className="mono mt-1 block text-[9px] text-slate-600">{station.latitude.toFixed(5)}, {station.longitude.toFixed(5)}</span>
+                  <span className="mt-2 flex flex-wrap gap-1.5">
+                    {station.powerClass && <span className="rounded border border-white/[.08] px-1.5 py-0.5 text-[9px] text-slate-300">{station.powerClass}</span>}
+                    {station.powerKw !== null && <span className="rounded border border-white/[.08] px-1.5 py-0.5 text-[9px] text-slate-300">{station.powerKw} kW</span>}
+                    {station.ports !== null && <span className="rounded border border-white/[.08] px-1.5 py-0.5 text-[9px] text-slate-300">{station.ports} {station.ports === 1 ? 'port' : 'ports'}</span>}
+                    {station.fastDc !== null && <span className="rounded border border-white/[.08] px-1.5 py-0.5 text-[9px] text-slate-300">{station.fastDc ? 'DC fast' : 'Not DC fast'}</span>}
+                  </span>
+                </span>
+                <span className="shrink-0 pt-0.5 text-right"><span className="mono block text-[13px] font-bold text-teal-200">{station.distanceKm.toFixed(2)}<span className="ml-1 text-[10px] font-normal text-slate-400">km</span></span><span className="mt-1 block text-[9px] uppercase tracking-wider text-slate-600">away</span></span>
+              </button>)}
+            </div>}
+            {nearest.data && <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/[.06] pt-3 text-[10px] text-slate-500">
+              <span className="flex items-center gap-1.5"><Activity size={12} className="text-teal-300" />{nearest.data.nodesVisited.toLocaleString()} nodes visited</span>
+              <span>{nearest.data.branchesPruned.toLocaleString()} branches pruned</span>
+              <span>{nearest.data.stationsIndexed.toLocaleString()} indexed for search</span>
+            </div>}
+          </section>
+        </div>
+      </section>
+
+      <section className="mt-7 grid gap-4 md:grid-cols-[1.1fr_2fr]">
+        <div className="surface rounded-2xl p-5">
+          <div className="mb-3 flex items-center gap-2 text-teal-300"><CircleHelp size={16} /><span className="text-[11px] font-semibold uppercase tracking-[.16em]">How ChargeFind works</span></div>
+          <p className="text-[13px] leading-6 text-slate-300">ChargeFind ranks stations from the supplied India dataset using geographic distance—not a broad city-level guess.</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-xl border border-white/[.065] bg-white/[.02] p-4"><div className="mono mb-2 text-[10px] text-teal-300">01 · BUILD INDEX</div><p className="text-xs leading-5 text-slate-400">The charging stations are organized in a 2D KD-tree.</p></div>
+          <div className="rounded-xl border border-white/[.065] bg-white/[.02] p-4"><div className="mono mb-2 text-[10px] text-teal-300">02 · SEARCH NEARBY</div><p className="text-xs leading-5 text-slate-400">The KD-tree explores relevant regions and prunes branches that cannot contain closer stations.</p></div>
+          <div className="rounded-xl border border-white/[.065] bg-white/[.02] p-4"><div className="mono mb-2 text-[10px] text-teal-300">03 · MEASURE</div><p className="text-xs leading-5 text-slate-400">Haversine distance accounts for the Earth’s curvature.</p></div>
+          <div className="rounded-xl border border-white/[.065] bg-white/[.02] p-4"><div className="mono mb-2 text-[10px] text-teal-300">04 · RETURN TOP-K</div><p className="text-xs leading-5 text-slate-400">The closest K stations are ranked and displayed on the map.</p></div>
+        </div>
+      </section>
+      <footer className="mt-8 flex flex-col gap-2 border-t border-white/[.06] pt-4 text-[10px] text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+        <span>{overview.data?.dataset ?? 'India station dataset'}{overview.data?.algorithm ? ` · ${overview.data.algorithm}` : ''}</span>
+        <span>Station details reflect dataset fields; availability is not inferred.</span>
+      </footer>
+    </div>
+  </main>;
+}
+
+function Router() {
+  return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
+}
+
+function RoutedErrorBoundary({ children }: { children: ReactNode }) {
+  const [location] = useLocation();
+  return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>;
+}
+
+function App() {
+  return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>;
+}
+
+export default App;

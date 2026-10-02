@@ -1,0 +1,824 @@
+PROJECT: CHARGEFIND — EV CHARGING STATION FINDER
+
+I am providing an existing project as an attachment. This existing project contains the backend/data/algorithm work for my DSA capstone project.
+
+YOUR JOB IS TO TURN THIS EXISTING PROJECT INTO A COMPLETE, WORKING, PROFESSIONAL, RESPONSIVE WEB APPLICATION.
+
+THIS IS NOT A DESIGN MOCKUP.
+THIS IS NOT A PROTOTYPE.
+THIS IS NOT A STATIC HTML PAGE.
+
+I need the actual application implemented, connected, runnable, and tested end-to-end.
+
+==================================================
+1. FIRST: INSPECT THE EXISTING PROJECT
+==================================================
+
+Before changing anything, inspect the complete attached project.
+
+Identify and understand:
+
+- existing Python backend
+- API implementation
+- KD-Tree implementation
+- Haversine implementation
+- dataset
+- dataset preparation code
+- frontend code, if any
+- tests
+- requirements
+- project configuration
+
+The existing project contains files/components related to:
+
+EV-Charging-Station-Finder
+├── data/
+├── src/
+├── tests/
+├── api.py
+├── app.py
+├── prepare_dataset.py
+├── requirements.txt
+├── test_haversine.py
+└── test_kd_tree.py
+
+These files are valuable existing project work.
+
+DO NOT unnecessarily delete, replace, or rewrite the existing algorithmic implementation.
+
+Preserve correct existing work.
+
+If the existing KD-Tree, Haversine, API, dataset, or tests are already implemented correctly, integrate them rather than creating an unrelated replacement.
+
+==================================================
+2. WHAT WE ARE BUILDING
+==================================================
+
+Build a web application called:
+
+CHARGEFIND
+
+Tagline:
+
+"Find the nearest EV charging stations intelligently."
+
+The purpose of the application is:
+
+A user provides a geographic location and asks for the K nearest EV charging stations.
+
+The application uses:
+
+1. A 2D KD-Tree for spatial indexing and nearest-neighbor searching.
+2. Haversine distance for geographically accurate distance calculation.
+3. Top-K nearest-neighbor search.
+4. A real EV charging station dataset.
+5. An interactive map to visualize the query location and nearby stations.
+
+The application should demonstrate the DSA concepts underneath a polished real-world product.
+
+The user should NOT need to understand the DSA to use the application.
+
+==================================================
+3. IMPORTANT ARCHITECTURE
+==================================================
+
+The final application should follow this architecture:
+
+USER
+  |
+  | latitude + longitude + K
+  v
+FRONTEND WEB APPLICATION
+  |
+  | API request
+  v
+BACKEND API
+  |
+  v
+2D KD-TREE
+  |
+  | spatial search / pruning
+  v
+CANDIDATE STATIONS
+  |
+  v
+HAVERSINE DISTANCE
+  |
+  v
+TOP-K NEAREST STATIONS
+  |
+  +----------------------+
+  |                      |
+  v                      v
+INTERACTIVE MAP       RESULT CARDS
+
+The frontend must communicate with the actual backend.
+
+Do NOT fake the API.
+
+Do NOT create fake station results simply to make the interface look populated.
+
+Use the actual dataset and actual search implementation.
+
+==================================================
+4. CORE USER EXPERIENCE
+==================================================
+
+When the application opens, the user should immediately understand:
+
+"What does this website do?"
+
+The main experience should be:
+
+1. Enter location.
+2. Select how many stations to find.
+3. Click Find Nearest Stations.
+4. See the result on a map.
+5. See ranked nearby stations.
+6. See distance for each station.
+7. Optionally inspect station details.
+
+The interface should feel like a real modern EV mobility product.
+
+==================================================
+5. VISUAL DESIGN
+==================================================
+
+Create a PREMIUM TECHNOLOGY / EV INTELLIGENCE aesthetic.
+
+Use:
+
+- deep navy / near-black background
+- cyan / electric teal primary accent
+- subtle blue/cyan glow
+- white and muted gray typography
+- clean modern cards
+- thin subtle borders
+- rounded corners
+- elegant spacing
+- professional icons
+- subtle gradients
+- restrained animations
+- excellent visual hierarchy
+
+The design should resemble a polished modern SaaS/geospatial product.
+
+It should NOT look like:
+
+- a basic college HTML project
+- a generic Bootstrap template
+- an AI-generated dashboard full of unnecessary cards
+- an overloaded DSA presentation
+- a cryptocurrency website
+
+The DSA should be present through the functionality and a small technology section, not dominate the interface.
+
+==================================================
+6. MAIN PAGE STRUCTURE
+==================================================
+
+Build the page with the following structure.
+
+------------------------------------------
+A. TOP NAVIGATION / BRAND
+------------------------------------------
+
+Display:
+
+CHARGEFIND
+
+Small descriptor:
+
+EV Spatial Intelligence
+
+Navigation/actions can include:
+
+- Search
+- How It Works
+- About
+
+Keep navigation minimal.
+
+Add a small status indicator such as:
+
+"Station data ready"
+
+ONLY show this if the actual dataset/API is available.
+
+------------------------------------------
+B. HERO SECTION
+------------------------------------------
+
+Large heading:
+
+"Find Your Nearest EV Charger."
+
+Supporting text:
+
+"Discover nearby electric vehicle charging stations using spatial search, geographic distance, and intelligent nearest-neighbor algorithms."
+
+Show small technology badges:
+
+2D KD-TREE
+HAVERSINE
+NEAREST NEIGHBOR
+TOP-K SEARCH
+
+Do not make the hero overly large.
+
+------------------------------------------
+C. SEARCH CARD
+------------------------------------------
+
+Create a prominent search panel.
+
+Title:
+
+"Find charging stations"
+
+Inputs:
+
+Latitude
+Longitude
+
+K:
+
+A slider or selector from 1 to 10.
+
+Show the current value clearly:
+
+K = 5
+
+Primary button:
+
+"Find Nearest Stations"
+
+Secondary option if practical:
+
+"Use my location"
+
+If browser geolocation is implemented, request permission normally and gracefully handle denial.
+
+Input validation must ensure:
+
+Latitude is between -90 and 90.
+
+Longitude is between -180 and 180.
+
+K is between 1 and 10.
+
+Show friendly validation messages.
+
+------------------------------------------
+D. QUICK STATISTICS
+------------------------------------------
+
+Show a small row of meaningful statistics.
+
+Examples:
+
+Stations indexed
+Results found
+Search method
+Search time
+
+IMPORTANT:
+
+Do not invent numbers.
+
+Use actual values from the dataset/backend whenever possible.
+
+For example:
+
+Stations indexed: actual dataset count
+
+Search method:
+2D KD-Tree
+
+Search time:
+actual measured query latency if available
+
+------------------------------------------
+E. MAIN MAP
+------------------------------------------
+
+This is one of the most important parts of the application.
+
+Create a large interactive map.
+
+Use a free map solution such as:
+
+Leaflet + OpenStreetMap
+
+unless the existing project already uses another appropriate map library.
+
+The map should show:
+
+1. User/query location.
+2. Charging station markers.
+3. Nearest K stations highlighted.
+4. Clear marker styling.
+5. Station popups.
+6. Automatic map fitting/zooming after search.
+
+The user's location should visually differ from charging station markers.
+
+Clicking a charging station should show useful information such as:
+
+Station name
+Latitude
+Longitude
+Distance
+
+Do not use paid APIs requiring a secret key unless the project already has one configured.
+
+==================================================
+7. RESULTS PANEL
+==================================================
+
+Beside or below the map, show:
+
+"Nearest Charging Stations"
+
+Results should be ranked:
+
+01
+02
+03
+04
+...
+
+Each result card should contain:
+
+Station name
+Distance
+Latitude
+Longitude
+Available station metadata from the actual dataset
+
+Make distance prominent.
+
+Example visual structure:
+
+01
+ABC EV Charging Station
+
+2.4 km away
+
+Latitude: ...
+Longitude: ...
+
+VIEW ON MAP
+
+Do not display fields that don't actually exist in the dataset.
+
+If station names are unavailable, use the most meaningful available station identifier.
+
+==================================================
+8. SORTING / CORRECTNESS
+==================================================
+
+The final results must be genuinely ordered by geographic distance.
+
+The frontend must NOT simply calculate or sort fake values.
+
+The backend should perform the intended search.
+
+The existing KD-Tree must be used for spatial indexing/search.
+
+Haversine should be used for geographic distance.
+
+The final K results should be returned to the frontend.
+
+If the existing implementation has a slightly different but correct architecture, adapt it rather than destroying it.
+
+==================================================
+9. LOADING STATE
+==================================================
+
+When the user clicks:
+
+"Find Nearest Stations"
+
+show a professional loading state.
+
+Examples:
+
+Searching nearby stations...
+
+Searching spatial index...
+
+Calculating geographic distances...
+
+Do not make the user think the application has frozen.
+
+After completion, replace the loading state with the actual results.
+
+==================================================
+10. ERROR HANDLING
+==================================================
+
+Implement proper error handling.
+
+Possible situations:
+
+- dataset unavailable
+- API unavailable
+- invalid latitude
+- invalid longitude
+- invalid K
+- no stations found
+- backend exception
+- map loading failure
+- network failure
+
+Show clean user-friendly messages.
+
+Do NOT expose ugly Python stack traces to normal users.
+
+For example:
+
+"Station data could not be loaded. Please try again."
+
+Provide a retry action.
+
+==================================================
+11. EMPTY STATE
+==================================================
+
+Before the first search, the results area should NOT look broken.
+
+Show something attractive such as:
+
+"Your nearest charging stations will appear here."
+
+With a small map/location icon.
+
+Do not display fake results.
+
+==================================================
+12. RESPONSIVE DESIGN
+==================================================
+
+The application must work on:
+
+Desktop
+Laptop
+Tablet
+Mobile
+
+On desktop:
+
+Search + map + results should use the available space intelligently.
+
+On mobile:
+
+Stack sections vertically.
+
+Make inputs and buttons easy to use.
+
+Do not allow horizontal overflow.
+
+==================================================
+13. DSA EXPLANATION
+==================================================
+
+Include a small section titled:
+
+"How ChargeFind Works"
+
+Keep it concise.
+
+Show three/four steps:
+
+01
+Build Spatial Index
+
+The charging stations are organized using a 2D KD-Tree.
+
+02
+Search Nearby
+
+The KD-Tree efficiently explores relevant spatial regions.
+
+03
+Calculate Distance
+
+Haversine distance accounts for the Earth's curvature.
+
+04
+Return Top-K
+
+The closest K stations are returned to the user.
+
+Do NOT put detailed formulas everywhere.
+
+This is a user-facing product, not a lecture slide.
+
+==================================================
+14. OPTIONAL TECHNICAL VISUALIZATION
+==================================================
+
+If practical, add a small "Search Engine" information panel.
+
+Show:
+
+2D KD-Tree
+Spatial pruning
+Haversine distance
+Top-K nearest neighbor
+
+Do not fabricate complexity numbers.
+
+Only display complexity claims that are consistent with the actual implementation.
+
+==================================================
+15. MAP + DATA INTEGRATION
+==================================================
+
+The map must be connected to actual API results.
+
+When the user searches:
+
+latitude = X
+longitude = Y
+K = 5
+
+the application should:
+
+1. send X/Y/K to backend
+2. backend performs KD-Tree search
+3. calculate/obtain Haversine distances
+4. return five actual stations
+5. frontend renders them
+6. map updates
+7. results panel updates
+8. statistics update
+
+Changing K should change the number of returned/displayed stations.
+
+==================================================
+16. BACKEND/API
+==================================================
+
+Inspect the existing API implementation.
+
+Determine:
+
+- endpoint
+- request format
+- response format
+- server startup method
+- port
+- dependencies
+
+If the current API is incomplete, fix it.
+
+If necessary, expose a clean endpoint similar to:
+
+GET /api/stations/nearest?lat=...&lon=...&k=...
+
+OR
+
+POST /api/stations/nearest
+
+Use whichever approach fits the existing project.
+
+Do not create duplicate APIs unnecessarily.
+
+The frontend must use the actual working endpoint.
+
+Handle CORS correctly if frontend and backend run on different origins.
+
+Make the application work in the Replit environment.
+
+==================================================
+17. DATASET
+==================================================
+
+Use the actual dataset already included in the project.
+
+Inspect:
+
+data/
+
+and any dataset preparation code.
+
+If preprocessing is required, use:
+
+prepare_dataset.py
+
+or the existing preprocessing pipeline.
+
+Do not replace the dataset with random generated stations.
+
+Do not hardcode a fake station list.
+
+If the dataset has thousands of records, make sure loading and indexing are handled efficiently.
+
+==================================================
+18. EXISTING TESTS
+==================================================
+
+Run the existing tests:
+
+test_haversine.py
+test_kd_tree.py
+
+and any other tests discovered.
+
+Fix failures where appropriate.
+
+Do not delete tests just because they fail.
+
+If API tests are missing and it is straightforward, add basic API validation tests.
+
+==================================================
+19. PERFORMANCE
+==================================================
+
+Keep the application reasonably efficient.
+
+Do not rebuild the KD-Tree for every query if the dataset does not change.
+
+Prefer:
+
+Load dataset
+   ↓
+Build KD-Tree once
+   ↓
+Reuse KD-Tree for queries
+
+Measure query latency if practical.
+
+Do not sacrifice correctness for cosmetic effects.
+
+==================================================
+20. ACCESSIBILITY
+==================================================
+
+Use:
+
+- readable contrast
+- labels for inputs
+- keyboard-accessible controls
+- visible focus states
+- meaningful button text
+- accessible map/result interactions where practical
+
+==================================================
+21. CODE QUALITY
+==================================================
+
+Keep the implementation organized.
+
+Separate:
+
+frontend UI
+API communication
+map logic
+state management
+backend logic
+data processing
+
+Avoid giant files where practical.
+
+Add comments only where they provide real value.
+
+Do not generate unnecessary code.
+
+==================================================
+22. IMPORTANT VISUAL DETAILS
+==================================================
+
+The final design should include:
+
+- ChargeFind branding
+- electric/charging visual language
+- subtle grid or geographic texture in hero
+- premium dark dashboard
+- cyan accent highlights
+- clean map
+- attractive station cards
+- polished buttons
+- smooth but restrained transitions
+- excellent spacing
+- responsive layout
+
+Use icons rather than emoji.
+
+Avoid excessive neon.
+
+Avoid excessive glassmorphism.
+
+Avoid huge text.
+
+Avoid unnecessary charts.
+
+Avoid unnecessary sidebars.
+
+The application should feel focused.
+
+==================================================
+23. DO NOT MAKE THESE MISTAKES
+==================================================
+
+DO NOT:
+
+- create only a static mockup
+- create fake station data
+- remove the existing KD-Tree
+- remove the existing Haversine implementation
+- replace the backend with random JavaScript calculations
+- show fake statistics
+- claim an API works without testing it
+- leave broken buttons
+- leave placeholder text such as "Lorem ipsum"
+- leave empty panels without purpose
+- stop after generating the UI
+- merely explain what should be done
+- ask me to manually implement everything
+- unnecessarily restart the project from scratch
+
+==================================================
+24. FINAL VERIFICATION
+==================================================
+
+Before you tell me the project is complete, ACTUALLY RUN AND TEST IT.
+
+Perform an end-to-end test:
+
+TEST 1:
+Use a valid latitude/longitude.
+
+TEST 2:
+Set K = 5.
+
+TEST 3:
+Click Find Nearest Stations.
+
+VERIFY:
+
+- frontend sends request
+- backend receives request
+- KD-Tree search executes
+- Haversine distances are calculated
+- five actual stations are returned
+- results are ranked
+- map displays stations
+- query location is displayed
+- result cards display correct information
+- statistics update
+- no console/runtime errors
+
+Then test:
+
+K = 1
+
+K = 10
+
+invalid latitude
+
+invalid longitude
+
+empty search
+
+backend/data failure state
+
+Fix any problems you discover.
+
+==================================================
+25. FINAL PRODUCT STANDARD
+==================================================
+
+The final result should be something I can demonstrate to faculty as:
+
+"ChargeFind is a web-based EV charging station finder that uses a custom 2D KD-Tree for efficient spatial nearest-neighbor search and Haversine distance for geographically accurate ranking."
+
+The interface should look like a professional real-world product.
+
+The implementation must be technically real underneath the interface.
+
+MOST IMPORTANT PRIORITY ORDER:
+
+1. WORKING APPLICATION
+2. REAL DATA
+3. CORRECT KD-TREE
+4. CORRECT HAVERSINE
+5. WORKING API
+6. INTERACTIVE MAP
+7. TOP-K RESULTS
+8. ERROR HANDLING
+9. PROFESSIONAL UI
+10. RESPONSIVE DESIGN
+
+Use the attached project as the foundation.
+
+Inspect first.
+Implement carefully.
+Run the application.
+Test it.
+Fix errors.
+Then present the completed working application.
+
+DO NOT STOP AT A MOCKUP.

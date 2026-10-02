@@ -1,0 +1,5 @@
+fastapi>=0.115
+uvicorn>=0.34
+streamlit>=1.40
+pandas>=2.2
+pydeck>=0.9

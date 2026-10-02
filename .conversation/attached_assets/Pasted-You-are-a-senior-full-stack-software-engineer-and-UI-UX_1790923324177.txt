@@ -1,0 +1,381 @@
+You are a senior full-stack software engineer and UI/UX designer.
+
+I am giving you an EXISTING EV Charging Station Finder project as an attachment. The existing project is the foundation. DO NOT throw away the existing implementation and DO NOT create a completely unrelated project.
+
+Your job is to inspect the attached project first, understand its existing Python backend, data, KD-Tree implementation, Haversine distance calculation, tests, and current structure, and then turn it into a polished, fully functional web application called:
+
+CHARGEFIND — EV CHARGING STATION FINDER
+
+IMPORTANT:
+This is NOT a visual mockup.
+This is NOT a landing page.
+This is NOT a prototype with fake buttons.
+
+Build and verify a REAL WORKING APPLICATION end-to-end.
+
+==================================================
+1. CORE PURPOSE
+==================================================
+
+ChargeFind helps an EV user find nearby electric vehicle charging stations.
+
+The user should be able to:
+- enter a location
+- use their current location if browser geolocation is available
+- search for nearby EV charging stations
+- see the nearest stations
+- see multiple results, not just one
+- view stations on an interactive map
+- see distance from the user's location
+- inspect station information
+- handle invalid searches gracefully
+
+The application should feel like a real modern EV mobility product.
+
+==================================================
+2. PRESERVE AND USE THE EXISTING DSA IMPLEMENTATION
+==================================================
+
+The attached project already contains the important DSA/backend work.
+
+DO NOT replace the KD-Tree with a simple linear search just to make the UI easier.
+
+Preserve and properly integrate the existing:
+
+- 2D KD-Tree
+- nearest-neighbor search
+- top-K nearest-neighbor search
+- Haversine distance calculation
+- station dataset
+- Python backend
+- existing tests wherever applicable
+
+The KD-Tree is a CORE academic requirement of this project.
+
+The user interface should hide unnecessary implementation complexity from normal users, but the application must actually use the KD-Tree internally.
+
+If the existing implementation has bugs, fix them rather than deleting the implementation.
+
+==================================================
+3. DATA
+==================================================
+
+Use the REAL station data already present in the attached project.
+
+Do NOT fill the application with invented/random stations.
+
+Inspect the existing dataset and understand its schema.
+
+If the dataset needs preprocessing, perform the preprocessing properly.
+
+Make sure:
+- latitude and longitude are valid
+- station names are displayed correctly
+- relevant station metadata is preserved
+- missing values do not crash the application
+
+If the existing project contains prepared data, reuse it.
+
+==================================================
+4. SEARCH EXPERIENCE
+==================================================
+
+Create a prominent search area.
+
+The user should be able to enter a location such as:
+
+"Chennai"
+"Coimbatore"
+"Madurai"
+or a latitude/longitude location if supported by the existing backend.
+
+Include:
+
+- Search input
+- Search button
+- "Use my location" option if browser geolocation is available
+- sensible loading state
+- clear error messages
+- empty-result state
+
+Do not make the user understand KD-Trees or algorithms in order to use the application.
+
+==================================================
+5. RESULTS
+==================================================
+
+After searching, display a clean list of the nearest charging stations.
+
+Each station card should show useful information such as:
+
+- station name
+- distance from searched location
+- location/address if available
+- latitude/longitude when appropriate
+- available station information from the dataset
+- clear action to view the station on the map
+
+Show the nearest results in an intuitive order.
+
+Support TOP-K results using the existing backend implementation.
+
+Provide a clean control for selecting the number of results where appropriate, for example:
+5 / 10 / 20 stations.
+
+==================================================
+6. INTERACTIVE MAP
+==================================================
+
+Integrate a real interactive map.
+
+The map should show:
+
+- user's/search location
+- charging station markers
+- visually distinguish the searched location from charging stations
+- clicking a station marker should show useful station information
+- selecting a station from the result list should focus the map on that station
+
+Use a reliable web mapping solution that works in this environment.
+
+Do NOT create a fake map image.
+
+The map must actually be interactive.
+
+If an external map API key is required, structure the application so the key can be supplied through an environment variable and do not hard-code secrets.
+
+==================================================
+7. UI / UX DESIGN
+==================================================
+
+Create a PREMIUM, MODERN, PROFESSIONAL EV TECHNOLOGY INTERFACE.
+
+The design should feel like a real product that could be demonstrated to a company or faculty jury.
+
+Visual direction:
+
+- dark premium interface
+- deep navy/charcoal background
+- electric cyan/teal accents
+- subtle green energy accents
+- clean white typography
+- modern cards
+- soft borders
+- tasteful shadows/glows
+- excellent spacing
+- rounded corners
+- professional icons
+- subtle animations
+- strong visual hierarchy
+
+Avoid:
+- childish UI
+- excessive gradients
+- excessive animations
+- giant paragraphs
+- generic AI-generated landing page appearance
+- unnecessary sections
+- fake statistics
+- fake testimonials
+- stock marketing content
+
+The application should prioritize FUNCTIONALITY over decorative content.
+
+==================================================
+8. MAIN DASHBOARD LAYOUT
+==================================================
+
+Create a polished dashboard-like experience.
+
+Suggested structure:
+
+TOP:
+ChargeFind logo/name
+small navigation/status area
+
+HERO / SEARCH:
+"Find your nearest EV charger."
+Short supporting text.
+
+Large location search box
+Search button
+Use My Location button
+
+MAIN CONTENT:
+LEFT:
+station results/cards
+
+RIGHT:
+large interactive map
+
+Below or around the results, show useful information such as:
+- number of stations found
+- nearest station
+- current search location
+- distance information
+
+Do NOT overload the screen with DSA theory.
+
+The user experience should look like a real EV finder.
+
+==================================================
+9. DSA VISIBILITY
+==================================================
+
+The project is an Advanced Data Structures and Algorithms project.
+
+Therefore, include a small professional "How ChargeFind Works" / "Technology" area that explains:
+
+1. User location
+2. KD-Tree spatial indexing
+3. Nearest-neighbor / Top-K search
+4. Haversine distance
+5. Results displayed on the map
+
+Keep this section compact.
+
+Do NOT place Big-O complexity everywhere on the main user interface.
+
+The actual KD-Tree implementation is more important than displaying theoretical text.
+
+==================================================
+10. BACKEND / API
+==================================================
+
+Inspect the attached Python backend.
+
+Reuse the existing API architecture where possible.
+
+Make sure the frontend communicates correctly with the backend.
+
+The complete flow must work:
+
+Frontend
+→ API
+→ KD-Tree
+→ nearest/top-K search
+→ Haversine distance
+→ station results
+→ frontend
+→ map
+
+Do not replace the backend with hard-coded frontend data.
+
+If the existing backend needs changes, make them.
+
+==================================================
+11. ERROR HANDLING
+==================================================
+
+Handle:
+
+- invalid location
+- empty search
+- no nearby stations
+- API failure
+- dataset problems
+- unavailable geolocation
+- invalid coordinates
+- network errors
+
+Show professional user-friendly messages.
+
+Never show raw Python stack traces to normal users.
+
+==================================================
+12. RESPONSIVE DESIGN
+==================================================
+
+The application MUST work properly on:
+
+- desktop
+- laptop
+- tablet
+- mobile
+
+On smaller screens:
+- stack the map and result list appropriately
+- keep search controls usable
+- prevent horizontal scrolling
+- make station cards readable
+
+==================================================
+13. PERFORMANCE
+==================================================
+
+Do not unnecessarily recompute the KD-Tree for every search.
+
+Build/load the spatial index appropriately and reuse it.
+
+Keep the application responsive.
+
+==================================================
+14. CODE QUALITY
+==================================================
+
+Use the existing project structure wherever practical.
+
+Do not unnecessarily rewrite working backend logic.
+
+Keep frontend and backend responsibilities clean.
+
+Use reusable components/functions.
+
+Remove dead code only when it is safe.
+
+Do not hard-code fake station results.
+
+Do not hard-code API responses just to make the UI appear functional.
+
+==================================================
+15. FINAL VERIFICATION — VERY IMPORTANT
+==================================================
+
+Before considering the task complete:
+
+1. Inspect the entire attached project.
+2. Run/install required dependencies.
+3. Start the application.
+4. Test the backend API.
+5. Test a real station search.
+6. Verify KD-Tree search is actually being used.
+7. Verify Haversine distance is correct.
+8. Verify TOP-K results.
+9. Verify the map loads.
+10. Verify station markers appear.
+11. Verify clicking results updates the map.
+12. Test invalid input.
+13. Test no-result scenarios.
+14. Test responsive layout.
+15. Fix any errors you encounter.
+16. Only then consider the application finished.
+
+If something does not work, DEBUG AND FIX IT instead of simply telling me that it needs to be fixed.
+
+==================================================
+16. IMPORTANT FINAL REQUIREMENT
+==================================================
+
+I am a student presenting this as an Advanced DSA project.
+
+The final result must therefore have BOTH:
+
+A. A genuinely usable, impressive EV charging station finder.
+
+AND
+
+B. A technically legitimate DSA implementation using:
+- 2D KD-Tree
+- nearest-neighbor search
+- Top-K search
+- Haversine distance
+
+The final application should look polished enough for a serious academic project demonstration.
+
+Do not stop at a mockup.
+Do not stop after generating UI.
+Do not merely describe what you would build.
+
+ACTUALLY IMPLEMENT IT, RUN IT, TEST IT, AND FIX IT.
+
+Start by inspecting the attached project and its existing files before making architectural decisions.

@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: stations
+    description: EV station discovery operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,77 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /stations/overview:
+    get:
+      operationId: getStationOverview
+      tags: [stations]
+      summary: Get station dataset status
+      responses:
+        "200":
+          description: Dataset status and index summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StationOverview"
+  /stations/cities:
+    get:
+      operationId: getCities
+      tags: [stations]
+      summary: Find cities represented in the station dataset
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        "200":
+          description: Matching cities and their dataset-based representative locations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CitySuggestion"
+  /stations/nearest:
+    get:
+      operationId: getNearestStations
+      tags: [stations]
+      summary: Find the nearest charging stations to a coordinate
+      parameters:
+        - name: latitude
+          in: query
+          required: true
+          schema:
+            type: number
+            minimum: -90
+            maximum: 90
+        - name: longitude
+          in: query
+          required: true
+          schema:
+            type: number
+            minimum: -180
+            maximum: 180
+        - name: k
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+      responses:
+        "200":
+          description: Ranked nearest stations and KD-tree search metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NearestStationsResponse"
+        "400":
+          description: Invalid search coordinates or result count
+        "503":
+          description: Station data is unavailable
 components:
   schemas:
     HealthStatus:
@@ -33,4 +106,93 @@ components:
           type: string
       required:
         - status
+    StationOverview:
+      type: object
+      properties:
+        dataReady:
+          type: boolean
+        stationsIndexed:
+          type: integer
+        citiesIndexed:
+          type: integer
+        algorithm:
+          type: string
+        dataset:
+          type: string
+      required: [dataReady, stationsIndexed, citiesIndexed, algorithm, dataset]
+    CitySuggestion:
+      type: object
+      properties:
+        name:
+          type: string
+        stateProvince:
+          type: ["string", "null"]
+        latitude:
+          type: number
+        longitude:
+          type: number
+        stationCount:
+          type: integer
+      required: [name, stateProvince, latitude, longitude, stationCount]
+    StationResult:
+      type: object
+      properties:
+        stationId:
+          type: string
+        name:
+          type: string
+        city:
+          type: string
+        stateProvince:
+          type: ["string", "null"]
+        latitude:
+          type: number
+        longitude:
+          type: number
+        distanceKm:
+          type: number
+        ports:
+          type: ["integer", "null"]
+        powerKw:
+          type: ["number", "null"]
+        powerClass:
+          type: ["string", "null"]
+        fastDc:
+          type: ["boolean", "null"]
+      required:
+        - stationId
+        - name
+        - city
+        - stateProvince
+        - latitude
+        - longitude
+        - distanceKm
+        - ports
+        - powerKw
+        - powerClass
+        - fastDc
+    NearestStationsResponse:
+      type: object
+      properties:
+        stations:
+          type: array
+          items:
+            $ref: "#/components/schemas/StationResult"
+        resultCount:
+          type: integer
+        stationsIndexed:
+          type: integer
+        nodesVisited:
+          type: integer
+        branchesPruned:
+          type: integer
+        searchTimeMs:
+          type: number
+      required:
+        - stations
+        - resultCount
+        - stationsIndexed
+        - nodesVisited
+        - branchesPruned
+        - searchTimeMs
 
