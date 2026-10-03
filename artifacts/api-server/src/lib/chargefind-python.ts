@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { spawn, type ChildProcess } from "node:child_process";
 import { createServer } from "node:net";
 import path from "node:path";
@@ -32,14 +33,32 @@ async function reserveLoopbackPort(): Promise<number> {
 }
 
 async function launchPythonApi(): Promise<PythonApiProcess> {
-  const workingDirectory = path.resolve(
+  const apiRoot = [
     process.cwd(),
+    path.resolve(process.cwd(), "artifacts/api-server"),
+  ].find((candidate) =>
+    existsSync(
+      path.join(
+        candidate,
+        "chargefind-python/EV-Charging-Station-Finder/api.py",
+      ),
+    ),
+  );
+  if (!apiRoot) {
+    throw new Error("Could not find the ChargeFind Python API directory.");
+  }
+
+  const workingDirectory = path.join(
+    apiRoot,
     "chargefind-python/EV-Charging-Station-Finder",
   );
   const pythonExecutable = path.resolve(
-    process.cwd(),
+    apiRoot,
     "../../.pythonlibs/bin/python",
   );
+  if (!existsSync(pythonExecutable)) {
+    throw new Error("Could not find the workspace Python executable.");
+  }
   const port = await reserveLoopbackPort();
   const child = spawn(
     pythonExecutable,
