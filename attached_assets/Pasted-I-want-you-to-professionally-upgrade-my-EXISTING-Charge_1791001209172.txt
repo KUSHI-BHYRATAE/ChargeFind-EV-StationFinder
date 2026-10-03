@@ -1,0 +1,526 @@
+I want you to professionally upgrade my EXISTING ChargeFind EV Station Finder into a polished, technically strong Advanced DSA + real-world EV charging application.
+
+IMPORTANT:
+- DO NOT rebuild the application from scratch.
+- DO NOT replace the existing architecture unnecessarily.
+- DO NOT remove or break anything that currently works.
+- Preserve the existing 2D KD-tree implementation, nearest-neighbour search, Haversine distance calculation, API routes, India EV station dataset, map, current-location functionality, and existing UI design language.
+- Make the smallest safe code changes necessary.
+- Reuse existing components, utilities, API routes, types, and data structures wherever possible.
+- Before modifying anything, inspect the existing project structure and understand how the frontend, backend/API, KD-tree, dataset, map, and generated API client are connected.
+- Do not create duplicate implementations of existing functionality.
+- Do not introduce unnecessary libraries.
+- Keep the application responsive on desktop and mobile.
+- Keep the current dark premium UI style with teal/cyan accents.
+- Do not make the UI look AI-generated or overly flashy.
+- Prioritize correctness, performance, maintainability, and professional UX.
+- Do not use fake data.
+- Only display station attributes that actually exist in the current dataset.
+- If a requested attribute does not exist, gracefully omit it rather than inventing it.
+
+CURRENT VERIFIED FUNCTIONALITY:
+The existing application successfully performs a Bengaluru K=5 search and returns real stations from the 1,161-station dataset in distance order.
+
+Example verified results:
+- JW Marriott — 0.08 km
+- Sundaram Motors — 0.29 km
+- ibis Bengaluru City Centre — 0.46 km
+- ITC Gardenia Bengaluru — 0.49 km
+- BMW Navnit Motors — 0.50 km
+
+The existing system uses:
+- 2D KD-tree spatial indexing
+- nearest-neighbour / top-K search
+- Haversine geographic distance
+- India EV charging station dataset
+- Leaflet/OpenStreetMap map
+- backend API for station search
+
+UPGRADE THE EXISTING APPLICATION WITH THESE 8 FEATURES:
+
+==================================================
+1. SMART STATION FILTERS
+==================================================
+
+Add a professional filtering system to the existing search interface.
+
+Allow users to filter results using ONLY fields supported by the dataset.
+
+At minimum support:
+- Charging type/category such as AC / DC where available
+- Minimum charging power (kW)
+- Maximum distance from search point
+- Number of charging ports/connectors where available
+- Any other useful existing dataset field if it is already available
+
+UX:
+- Filters should be clean and compact.
+- Do not overwhelm the user.
+- Provide a clear "Reset Filters" action.
+- Show the number of matching stations.
+- Make it obvious when filters are active.
+- No filters selected should preserve the current behavior exactly.
+
+IMPORTANT ALGORITHM REQUIREMENT:
+Do not destroy the existing KD-tree search.
+
+The system should conceptually perform:
+
+Query location
+→ KD-tree spatial search
+→ candidate stations
+→ apply valid user constraints
+→ calculate/display geographic distance
+→ rank results
+→ return top K
+
+If the existing architecture supports a better safe approach, use it without replacing the KD-tree.
+
+==================================================
+2. PROFESSIONAL STATION DETAIL CARDS
+==================================================
+
+Improve the existing station result cards.
+
+Each station card should clearly display available dataset information such as:
+
+- Rank
+- Station name
+- City/state
+- Distance
+- Latitude/longitude
+- Charging type/category
+- Charging power
+- Number of ports/connectors
+- Any other useful charging attribute actually present in the dataset
+
+Use compact badges for technical attributes.
+
+Example visual hierarchy:
+
+01
+JW Marriott
+
+0.08 km away
+
+[DC FAST] [60 kW] [1 PORT]
+
+Bengaluru, Karnataka
+
+[View on Map] [Details] [Directions]
+
+Do not invent information.
+
+The station card should remain visually clean and readable.
+
+==================================================
+3. "WHY THIS STATION?" EXPLANATION
+==================================================
+
+Add a small explainability section to each result or to the station details view.
+
+Explain WHY the station was returned.
+
+For example:
+
+"Selected because it is 0.08 km from the search point and ranked #1 among the returned candidates."
+
+For filtered searches, explain the relevant criteria:
+
+"Matches your DC Fast + ≥50 kW filter and is 0.29 km from the search point."
+
+Also add a compact algorithm explanation somewhere in the application:
+
+KD-TREE
+→ spatially narrows the search region
+
+HAVERSINE
+→ calculates geographic distance
+
+TOP-K
+→ ranks and returns the nearest matching stations
+
+Do NOT falsely claim that the KD-tree eliminates every unnecessary station. Explain it accurately as spatial pruning / candidate reduction.
+
+This feature should make the DSA contribution obvious to a project evaluator.
+
+==================================================
+4. SEARCH PERFORMANCE / ALGORITHM PANEL
+==================================================
+
+Create a professional "Search Performance" or "Algorithm Metrics" panel.
+
+Display actual values from the running application whenever possible.
+
+Useful metrics:
+
+- Dataset size
+- K requested
+- Number of returned stations
+- Search/query time
+- Distance metric: Haversine
+- Spatial index: 2D KD-tree
+
+Example:
+
+SEARCH PERFORMANCE
+
+1,161 stations indexed
+K = 5
+Search time = 0.31 ms
+Distance = Haversine
+Index = 2D KD-tree
+
+Do NOT fabricate performance values.
+
+If the existing backend already measures request/search time, use that value.
+
+If timing is not currently available, implement lightweight accurate timing around the relevant search operation.
+
+Do not use fake benchmark numbers.
+
+Also add a small "How it works" visualization:
+
+01 BUILD
+Stations are indexed in a 2D KD-tree.
+
+02 SEARCH
+The KD-tree prunes spatial regions that cannot contain a closer candidate.
+
+03 MEASURE
+Haversine calculates geographic distance.
+
+04 RANK
+The nearest K valid stations are returned.
+
+Keep this concise and technically accurate.
+
+==================================================
+5. STATION COMPARISON
+==================================================
+
+Allow the user to select up to 3 stations and compare them.
+
+Add a "Compare" interaction to station cards.
+
+The comparison panel should show available fields such as:
+
+Station
+Distance
+Charging type
+Power
+Ports
+Location
+
+Example:
+
+                 Station A      Station B      Station C
+Distance         0.08 km        0.29 km        0.46 km
+Power            60 kW          90 kW          60 kW
+Type             DC Fast        DC Fast        DC Fast
+Ports            1              1              1
+
+Do not rank or label a station as "best" automatically.
+
+The purpose is to allow the user to make their own comparison.
+
+Keep comparison UI lightweight and responsive.
+
+==================================================
+6. DIRECTIONS / MAP NAVIGATION
+==================================================
+
+Add a "Directions" button to each station.
+
+When clicked, open an external mapping/navigation service using the station's actual latitude and longitude.
+
+Do not build a routing engine.
+
+Do not claim that the application calculates driving routes unless an actual routing service is implemented.
+
+The existing "View on Map" behavior must continue working.
+
+The map should:
+- Show the search point
+- Show returned charging stations
+- Clearly distinguish the search point from station markers
+- Allow clicking a marker to see station information
+- Keep the existing Leaflet/OpenStreetMap implementation
+
+When a station is selected from the result list, visually focus/highlight its marker on the map if the existing architecture allows it safely.
+
+==================================================
+7. CURRENT LOCATION EXPERIENCE
+==================================================
+
+Keep and improve the existing:
+
+"Use my current location"
+
+function.
+
+Flow:
+
+User clicks Use My Current Location
+→ obtain browser geolocation permission
+→ populate latitude/longitude
+→ update search point on map
+→ perform the existing nearest-station search
+→ display ranked results
+
+Handle these cases professionally:
+
+- Permission denied
+- Location unavailable
+- Browser does not support geolocation
+- User cancels location permission
+
+Show clear user-friendly messages.
+
+Do not expose or store unnecessary location information.
+
+Do not break manual latitude/longitude entry.
+
+==================================================
+8. TWO SEARCH MODES
+==================================================
+
+Introduce two simple search modes without duplicating the search engine.
+
+MODE A — NEAREST STATIONS
+
+Purpose:
+Find the closest K charging stations to the search location.
+
+Controls:
+- Search location
+- K
+
+This should preserve the existing behavior.
+
+MODE B — SMART CHARGING SEARCH
+
+Purpose:
+Find nearby stations satisfying user-defined charging constraints.
+
+Possible controls based ONLY on available dataset fields:
+- Maximum distance
+- Minimum power
+- Charging type/category
+- Minimum ports
+
+Example:
+
+SMART CHARGING SEARCH
+
+Within: 5 km
+Charging: DC Fast
+Minimum power: 50 kW
+Stations: 5
+
+Then:
+
+Search
+→ KD-tree candidate search
+→ constraints/filtering
+→ Haversine distance
+→ ranking
+→ top-K results
+
+Clearly show which filters are active.
+
+Do not create a completely separate search engine.
+
+==================================================
+UI/UX REQUIREMENTS
+==================================================
+
+Keep the existing premium dark interface.
+
+Improve hierarchy and spacing rather than redesigning everything.
+
+Use:
+- Dark navy background
+- Existing teal/cyan accent
+- Consistent cards
+- Subtle borders
+- Compact badges
+- Clear typography
+- Smooth but restrained hover states
+- Responsive layout
+
+Avoid:
+- Excessive gradients
+- Huge animations
+- Unnecessary 3D effects
+- Excessive glowing elements
+- Fake statistics
+- AI-chatbot-style UI
+- Stock images
+- Decorative elements that distract from the DSA functionality
+
+The application should look like a serious technical product, not a template.
+
+==================================================
+MAP REQUIREMENTS
+==================================================
+
+Preserve the existing Leaflet/OpenStreetMap map.
+
+Improve it only where useful:
+
+- Search point marker
+- Station markers
+- Selected station highlighting
+- Station popup/details
+- Fit map bounds appropriately when results are returned
+- Keep map responsive
+- Keep map and result cards synchronized
+
+Do not replace Leaflet unless absolutely necessary.
+
+==================================================
+TECHNICAL REQUIREMENTS
+==================================================
+
+The most important requirement is to preserve the actual DSA implementation.
+
+Do not replace the KD-tree with:
+- brute-force scanning
+- an external nearest-neighbour API
+- a different spatial library
+- a simple sort of every station
+
+The project must continue demonstrating:
+
+2D KD-tree
++
+Nearest-neighbour / top-K search
++
+Haversine distance
++
+Filtering
++
+Ranking
+
+Keep the existing backend API architecture.
+
+Reuse existing generated API hooks/client where appropriate.
+
+Avoid unnecessary dependency installation.
+
+Do not modify unrelated project files.
+
+==================================================
+ERROR HANDLING
+==================================================
+
+The previous application had a backend connection/runtime-path problem that has already been fixed.
+
+DO NOT REINTRODUCE that issue.
+
+Before finishing:
+- Verify the API starts correctly.
+- Verify the frontend can reach the API.
+- Verify the nearest-station endpoint.
+- Verify filters.
+- Verify K changes.
+- Verify current-location/manual-coordinate search.
+- Verify map markers.
+- Verify station cards.
+- Verify comparison.
+- Verify directions.
+- Verify no-result cases.
+- Verify invalid input handling.
+
+Do not publish or republish the application automatically.
+
+==================================================
+PERFORMANCE
+==================================================
+
+Keep the application efficient.
+
+Do not load unnecessary duplicate copies of the dataset into the frontend.
+
+Keep the dataset/server-side search architecture intact if that is how the existing project works.
+
+Avoid unnecessary API requests.
+
+Debounce search/filter interactions if needed.
+
+Do not perform expensive full-dataset operations in the browser if they can remain server-side.
+
+==================================================
+IMPORTANT IMPLEMENTATION PROCESS
+==================================================
+
+WORK IN PHASES.
+
+PHASE 1:
+Inspect the complete existing project and identify:
+- frontend entry points
+- backend/API
+- KD-tree implementation
+- Haversine implementation
+- dataset location/schema
+- map implementation
+- station result components
+- generated API client/hooks
+- runtime/startup configuration
+
+PHASE 2:
+Implement the eight features incrementally while preserving existing behavior.
+
+PHASE 3:
+Run type checking/build/tests.
+
+PHASE 4:
+Run an actual end-to-end search using the existing Bengaluru coordinates:
+
+Latitude: 12.9716
+Longitude: 77.5946
+K: 5
+
+Confirm that the API returns actual stations in distance order.
+
+PHASE 5:
+Test at least:
+1. Normal nearest-station search
+2. Different K value
+3. AC/DC filtering if supported by dataset
+4. Minimum power filter
+5. Distance filter
+6. Port filter if supported
+7. Current-location flow
+8. Manual coordinates
+9. Station map interaction
+10. Comparison of 2–3 stations
+11. Directions button
+12. No matching stations
+13. Invalid coordinates
+14. Reset filters
+
+PHASE 6:
+Review the UI for consistency and responsiveness.
+
+PHASE 7:
+Provide me with a concise implementation summary listing:
+- files changed
+- features implemented
+- tests performed
+- any limitations caused by the existing dataset
+- confirmation that KD-tree + Haversine + top-K remain intact
+
+CRITICAL:
+Do not stop after making UI changes.
+
+The final result must be a FUNCTIONAL application where every implemented feature is connected to the actual existing data and search system.
+
+If a feature cannot be safely implemented because the dataset or existing architecture does not support it, do NOT invent data or fake the functionality. Tell me exactly what is missing and implement everything else.
+
+MOST IMPORTANT:
+Preserve the currently working application first.
+Enhance it second.
+Do not rewrite working core logic unnecessarily.
+Do not publish automatically.
