@@ -3,7 +3,7 @@ import math
 import threading
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -76,6 +76,34 @@ def _station_record(row: dict[str, str]) -> dict[str, Any]:
 
 RECORDS = [_station_record(row) for row in DATA_ROWS]
 RECORDS_BY_ID = {record["stationId"]: record for record in RECORDS}
+
+
+def _matches_station_filters(
+    station: Any,
+    charging_type: Literal["AC", "DC"] | None,
+    minimum_power_kw: float | None,
+    minimum_ports: int | None,
+) -> bool:
+    record = RECORDS_BY_ID.get(str(station.station_id))
+    if record is None:
+        return False
+
+    if charging_type:
+        power_class = (record["powerClass"] or "").upper()
+        if not power_class.startswith(f"{charging_type}_"):
+            return False
+
+    if minimum_power_kw is not None:
+        power_kw = record["powerKw"]
+        if power_kw is None or power_kw < minimum_power_kw:
+            return False
+
+    if minimum_ports is not None:
+        ports = record["ports"]
+        if ports is None or ports < minimum_ports:
+            return False
+
+    return True
 
 
 class SearchInput(BaseModel):
@@ -184,6 +212,16 @@ def nearest_stations(
     latitude: float = Query(ge=-90, le=90),
     longitude: float = Query(ge=-180, le=180),
     k: int = Query(ge=1, le=10),
+    charging_type: Literal["AC", "DC"] | None = Query(
+        default=None, alias="chargingType"
+    ),
+    minimum_power_kw: float | None = Query(
+        default=None, ge=0, alias="minimumPowerKw"
+    ),
+    maximum_distance_km: float | None = Query(
+        default=None, ge=0, alias="maximumDistanceKm"
+    ),
+    minimum_ports: int | None = Query(default=None, ge=1, alias="minimumPorts"),
 ) -> dict[str, Any]:
     if not STATIONS:
         raise HTTPException(status_code=503, detail="Station data is unavailable.")
@@ -194,6 +232,13 @@ def nearest_stations(
             latitude,
             longitude,
             k=min(k, len(STATIONS)),
+            predicate=lambda station: _matches_station_filters(
+                station,
+                charging_type,
+                minimum_power_kw,
+                minimum_ports,
+            ),
+            max_distance_km=maximum_distance_km,
         )
         nodes_visited = TREE.nodes_visited
         branches_pruned = TREE.nodes_pruned

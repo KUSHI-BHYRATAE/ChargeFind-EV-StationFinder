@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { GetNearestStationsChargingType } from './getNearestStationsChargingType';
 
 export type GetNearestStationsParams = {
 /**
@@ -22,4 +23,17 @@ longitude: number;
  * @maximum 10
  */
 k: number;
+chargingType?: GetNearestStationsChargingType;
+/**
+ * @minimum 0
+ */
+minimumPowerKw?: number;
+/**
+ * @minimum 0
+ */
+maximumDistanceKm?: number;
+/**
+ * @minimum 1
+ */
+minimumPorts?: number;
 };

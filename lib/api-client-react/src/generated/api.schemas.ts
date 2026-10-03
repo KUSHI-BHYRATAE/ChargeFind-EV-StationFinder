@@ -77,5 +77,26 @@ longitude: number;
  * @maximum 10
  */
 k: number;
+chargingType?: GetNearestStationsChargingType;
+/**
+ * @minimum 0
+ */
+minimumPowerKw?: number;
+/**
+ * @minimum 0
+ */
+maximumDistanceKm?: number;
+/**
+ * @minimum 1
+ */
+minimumPorts?: number;
 };
+
+export type GetNearestStationsChargingType = typeof GetNearestStationsChargingType[keyof typeof GetNearestStationsChargingType];
+
+
+export const GetNearestStationsChargingType = {
+  AC: 'AC',
+  DC: 'DC',
+} as const;
 

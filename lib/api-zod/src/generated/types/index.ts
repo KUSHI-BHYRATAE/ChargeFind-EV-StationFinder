@@ -8,6 +8,7 @@
 
 export * from './citySuggestion';
 export * from './getCitiesParams';
+export * from './getNearestStationsChargingType';
 export * from './getNearestStationsParams';
 export * from './healthStatus';
 export * from './nearestStationsResponse';

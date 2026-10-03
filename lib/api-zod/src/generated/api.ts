@@ -61,12 +61,21 @@ export const getNearestStationsQueryLongitudeMax = 180;
 
 export const getNearestStationsQueryKMax = 10;
 
+export const getNearestStationsQueryMinimumPowerKwMin = 0;
+
+export const getNearestStationsQueryMaximumDistanceKmMin = 0;
+
+
 
 
 export const GetNearestStationsQueryParams = zod.object({
   "latitude": zod.coerce.number().min(getNearestStationsQueryLatitudeMin).max(getNearestStationsQueryLatitudeMax),
   "longitude": zod.coerce.number().min(getNearestStationsQueryLongitudeMin).max(getNearestStationsQueryLongitudeMax),
-  "k": zod.coerce.number().int().min(1).max(getNearestStationsQueryKMax)
+  "k": zod.coerce.number().int().min(1).max(getNearestStationsQueryKMax),
+  "chargingType": zod.enum(['AC', 'DC']).optional(),
+  "minimumPowerKw": zod.coerce.number().min(getNearestStationsQueryMinimumPowerKwMin).optional(),
+  "maximumDistanceKm": zod.coerce.number().min(getNearestStationsQueryMaximumDistanceKmMin).optional(),
+  "minimumPorts": zod.coerce.number().int().min(1).optional()
 })
 
 export const GetNearestStationsResponse = zod.object({

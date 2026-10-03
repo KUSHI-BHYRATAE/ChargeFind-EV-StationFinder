@@ -97,6 +97,18 @@ router.get("/stations/nearest", async (req, res): Promise<void> => {
     longitude: String(params.data.longitude),
     k: String(params.data.k),
   });
+  if (params.data.chargingType) {
+    query.set("chargingType", params.data.chargingType);
+  }
+  if (params.data.minimumPowerKw !== undefined) {
+    query.set("minimumPowerKw", String(params.data.minimumPowerKw));
+  }
+  if (params.data.maximumDistanceKm !== undefined) {
+    query.set("maximumDistanceKm", String(params.data.maximumDistanceKm));
+  }
+  if (params.data.minimumPorts !== undefined) {
+    query.set("minimumPorts", String(params.data.minimumPorts));
+  }
   try {
     const response = await requestChargeFind(
       `/stations/nearest?${query.toString()}`,

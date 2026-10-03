@@ -84,7 +84,9 @@ class KDTree:
         self,
         latitude,
         longitude,
-        k=5
+        k=5,
+        predicate=None,
+        max_distance_km=None
     ):
 
         self.nodes_visited = 0
@@ -97,7 +99,9 @@ class KDTree:
             latitude,
             longitude,
             k,
-            results
+            results,
+            predicate,
+            max_distance_km
         )
 
         results.sort(
@@ -116,7 +120,9 @@ class KDTree:
         latitude,
         longitude,
         k,
-        results
+        results,
+        predicate=None,
+        max_distance_km=None
     ):
 
         if node is None:
@@ -133,17 +139,22 @@ class KDTree:
             station.longitude
         )
 
-        results.append(
-            (distance, station)
+        within_max_distance = (
+            max_distance_km is None or distance <= max_distance_km
         )
+        matches_predicate = predicate is None or predicate(station)
+        if within_max_distance and matches_predicate:
+            results.append(
+                (distance, station)
+            )
 
-        # Keep only useful candidates
-        results.sort(
-            key=lambda x: x[0]
-        )
+            # Keep only the nearest matching candidates.
+            results.sort(
+                key=lambda x: x[0]
+            )
 
-        if len(results) > k:
-            results.pop()
+            if len(results) > k:
+                results.pop()
 
         # Determine splitting dimension
         if node.axis == 0:
@@ -176,7 +187,9 @@ class KDTree:
             latitude,
             longitude,
             k,
-            results
+            results,
+            predicate,
+            max_distance_km
         )
 
         # ----------------------------------
@@ -230,33 +243,21 @@ class KDTree:
                 min(1.0, max(0.0, cross_track))
             )
 
-        if len(results) < k:
+        worst_distance = (
+            results[-1][0] if len(results) >= k else float("inf")
+        )
+        if max_distance_km is not None:
+            worst_distance = min(worst_distance, max_distance_km)
 
+        if plane_distance_km <= worst_distance:
             self._search(
                 second,
                 latitude,
                 longitude,
                 k,
-                results
+                results,
+                predicate,
+                max_distance_km
             )
-
         else:
-
-            worst_distance = max(
-                distance
-                for distance, _ in results
-            )
-
-            if plane_distance_km <= worst_distance:
-
-                self._search(
-                    second,
-                    latitude,
-                    longitude,
-                    k,
-                    results
-                )
-
-            else:
-
-                self.nodes_pruned += 1
+            self.nodes_pruned += 1

@@ -1,1 +1,2 @@
 - [ChargeFind runtime paths](chargefind-runtime-paths.md) — Replit dev and production launch the API server from different working directories.
+- [ChargeFind filtered spatial search](chargefind-filtered-spatial-search.md) — Apply smart-search constraints during KD-tree traversal, before top-K pruning.

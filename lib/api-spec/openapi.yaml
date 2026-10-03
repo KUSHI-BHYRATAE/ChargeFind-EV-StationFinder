@@ -86,6 +86,30 @@ paths:
             type: integer
             minimum: 1
             maximum: 10
+        - name: chargingType
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [AC, DC]
+        - name: minimumPowerKw
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 0
+        - name: maximumDistanceKm
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 0
+        - name: minimumPorts
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
       responses:
         "200":
           description: Ranked nearest stations and KD-tree search metrics
